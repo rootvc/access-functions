@@ -1,14 +1,15 @@
 {
-  "name": "rootvc-access-functions-gmail-sync",
+  "name": "auth",
   "version": "0.1.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "Root Ventures",
+  "author": "serverless.com",
   "license": "MIT",
   "devDependencies": {
+    "serverless-dotenv-plugin": "^3.11.1",
     "serverless-google-cloudfunctions": "^4.5.0"
   },
   "dependencies": {
