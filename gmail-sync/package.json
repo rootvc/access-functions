@@ -1,0 +1,14 @@
+{
+  "name": "rootvc-access-functions-gmail-sync",
+  "version": "0.1.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Root Ventures",
+  "license": "MIT",
+  "devDependencies": {
+    "serverless-google-cloudfunctions": "^4.5.0"
+  }
+}

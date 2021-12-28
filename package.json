@@ -1,0 +1,14 @@
+{
+  "name": "rootvc-access-functions",
+  "version": "0.1.0",
+  "description": "GCP Cloud Functions for RootVC Access",
+  "scripts": {
+    "first": "(cd gmail-sync && serverless invoke --function first)",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Root Ventures",
+  "license": "MIT",
+  "devDependencies": {
+    "serverless-google-cloudfunctions": "^4.5.0"
+  }
+}
