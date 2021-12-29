@@ -20,17 +20,28 @@ const pg = require('knex')({
   }
 });
 
-async function create(request, response) {
-  // Check if we have previously stored a token.
-  // fs.readFile(TOKEN_PATH, (err, token) => {
-  //   if (err) return getNewToken(oAuth2Client, callback);
-  //   oAuth2Client.setCredentials(JSON.parse(token));
-  //   callback(oAuth2Client);
-  // });
+pg.schema.hasTable('grants').then((exists) => {
+  if (!exists) {
+    return pg.schema.createTable('grants', (t) => {
+      t.increments('id').primary();
+      t.text('grant_id', 255).notNullable().unique();
+      t.text('email', 255);
+      t.jsonb('raw_response');
+      t.text('access_token', 255).notNullable();
+      t.text('refresh_token', 255).notNullable();
+      t.text('scope', 255).notNullable();
+      t.dateTime('expiry_date').notNullable();
+      t.timestamp('updated_at').notNullable().defaultTo(pg.fn.now())
+      t.timestamp('created_at').notNullable().defaultTo(pg.fn.now())
+    });
+  }
+});
 
+async function create(request, response) {
   const url = oauth2Client.generateAuthUrl({
     access_type: 'offline',
-    scope: scopes
+    scope: scopes,
+    prompt: 'consent'
   });
 
   response.redirect(url);
@@ -44,25 +55,26 @@ async function callback(request, response) {
 
   if (code) {
     const {tokens} = await oauth2Client.getToken(code);
-
-    pg.schema.hasTable('grants').then((exists) => {
-      if (!exists) {
-        return pg.schema.createTable('grants', (t) => {
-          t.increments('id').primary();
-          t.text('grant_id', 73);
-          t.text('email', 254);
-        });
-      }
-    });
-
     oauth2Client.setCredentials(tokens);
 
-        // TODO: Store tokens
-        // Also: make sure schema is correct
+    const [record] = await pg('grants')
+      .insert({
+        'grant_id': code,
+        'email': null, // TODO: Lookup
+        'raw_response': tokens,
+        'access_token': tokens.access_token,
+        'refresh_token': tokens.refresh_token,
+        'scope': tokens.scope,
+        'expiry_date': new Date(tokens.expiry_date),
+        'updated_at': pg.fn.now()
+      })
+      .onConflict('grant_id')
+      .merge()
+      .returning('*');
 
-    response.status(200).send(tokens);
+    response.status(200).send(record.access_token);
   } else {
-    response.status(200).send(error || 'User declined to authorize application.');
+    response.status(200).send(error || 'You must authorize RootVC Access in order to use it!');
   } 
 }
 
