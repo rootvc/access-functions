@@ -9,6 +9,17 @@ const oauth2Client = new google.auth.OAuth2(
 );
 const gmail = google.gmail('v1', oauth2Client);
 
+const pg = require('knex')({
+  client: 'pg',
+  connection: {
+    host : process.env.GOOGLE_CLOUD_SQL_HOST,
+    port : 5432,
+    user : process.env.GOOGLE_CLOUD_SQL_USERNAME,
+    password : process.env.GOOGLE_CLOUD_SQL_PASSWORD,
+    database : process.env.GOOGLE_CLOUD_SQL_DATABASE
+  }
+});
+
 async function create(request, response) {
   // Check if we have previously stored a token.
   // fs.readFile(TOKEN_PATH, (err, token) => {
@@ -29,12 +40,27 @@ async function callback(request, response) {
   const query = request.query;
   const code = query.code;
   const error = query.error;
+  const scope = query.scope;
 
   if (code) {
-    const {tokens} = await oauth2Client.getToken(code)
-    // TODO: Store tokens
+    const {tokens} = await oauth2Client.getToken(code);
+
+    pg.schema.hasTable('grants').then((exists) => {
+      if (!exists) {
+        return pg.schema.createTable('grants', (t) => {
+          t.increments('id').primary();
+          t.text('grant_id', 73);
+          t.text('email', 254);
+        });
+      }
+    });
+
     oauth2Client.setCredentials(tokens);
-    response.status(200).send(code);
+
+        // TODO: Store tokens
+        // Also: make sure schema is correct
+
+    response.status(200).send(tokens);
   } else {
     response.status(200).send(error || 'User declined to authorize application.');
   } 
